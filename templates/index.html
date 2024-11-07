@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      width: 80%;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    input,
+    button {
+      padding: 8px;
+      margin: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Student Management System</h1>
+
+    <!-- Form to create or update student -->
+    <div>
+      <h2>Add / Update Student</h2>
+      <form id="studentForm">
+        <div class="form-group">
+          <label for="name">Name:</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+          <label for="age">Age:</label>
+          <input type="number" id="age" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input type="email" id="email" required>
+        </div>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+
+    <h2>All Students</h2>
+    <table id="studentsTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Student data will be injected here -->
+      </tbody>
+    </table>
+
+    <div id="studentSummary"></div>
+  </div>
+
+  <script>
+    // Function to fetch and display all students
+    async function loadStudents() {
+      const response = await fetch('/students');
+      const students = await response.json();
+      const tableBody = document.querySelector('#studentsTable tbody');
+      tableBody.innerHTML = '';  // Clear the table before adding new rows
+      students.forEach(student => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+                    <td>${student.id}</td>
+                    <td>${student.name}</td>
+                    <td>${student.age}</td>
+                    <td>${student.email}</td>
+                    <td>
+                        <button onclick="getStudentSummary(${student.id})">Get Summary</button>
+                        <button onclick="deleteStudent(${student.id})">Delete</button>
+                    </td>
+                `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Function to get the summary of a student
+    async function getStudentSummary(studentId) {
+      const response = await fetch(`/students/${studentId}/summary`);
+      const data = await response.json();
+      document.getElementById('studentSummary').innerHTML = `<h3>Student Summary:</h3><p>${data.summary}</p>`;
+    }
+
+    // Function to delete a student
+    async function deleteStudent(studentId) {
+      const response = await fetch(`/students/${studentId}`, {
+        method: 'DELETE'
+      });
+      if (response.ok) {
+        alert('Student deleted successfully');
+        loadStudents();  // Reload the student list
+      }
+    }
+
+    // Handle student form submission (create or update student)
+    document.getElementById('studentForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+
+      const name = document.getElementById('name').value;
+      const age = document.getElementById('age').value;
+      const email = document.getElementById('email').value;
+
+      const studentData = {
+        name,
+        age,
+        email
+      };
+
+      const response = await fetch('/students', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(studentData)
+      });
+
+      if (response.ok) {
+        alert('Student added successfully');
+        loadStudents();  // Reload the student list
+      } else {
+        alert('Error adding student');
+      }
+
+      // Clear form after submission
+      document.getElementById('studentForm').reset();
+    });
+
+    // Load all students when the page loads
+    window.onload = loadStudents;
+  </script>
+</body>
+
+</html>
